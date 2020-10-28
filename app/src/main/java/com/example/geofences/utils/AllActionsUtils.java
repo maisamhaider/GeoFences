@@ -2,19 +2,14 @@ package com.example.geofences.utils;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.media.AudioManager;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.Build;
 import android.provider.Settings;
-import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
-import com.example.geofences.annotations.MYAnnotations;
+import com.example.geofences.annotations.MyAnnotations;
 
 public class AllActionsUtils {
     private Context context;
@@ -37,11 +32,11 @@ public class AllActionsUtils {
 
         am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         //For Normal mode
-        if (whatToSet.matches(MYAnnotations.RINGER_MODE_NORMAL)) {
+        if (whatToSet.matches(MyAnnotations.RINGER_MODE_NORMAL)) {
             am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
         } else
         //For Silent mode
-            if (whatToSet.matches(MYAnnotations.RINGER_MODE_SILENT)) {
+            if (whatToSet.matches(MyAnnotations.RINGER_MODE_SILENT)) {
 
                 am.setRingerMode(AudioManager.RINGER_MODE_SILENT);
             } else
@@ -64,6 +59,21 @@ public class AllActionsUtils {
             }
         }
 
+
+    }
+
+
+    public void SetAirplaneMode(boolean enabled){
+        //---toggle Airplane mode---
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Settings.System.canWrite(context))
+            {
+                Settings.System.putInt(context.getContentResolver(),Settings.Global.AIRPLANE_MODE_ON, enabled ? 1 : 0);
+                Intent i = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+                i.putExtra("state", enabled);
+                context.sendBroadcast(i);
+            }
+        }
 
     }
 

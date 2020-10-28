@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">GeoFences</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="admin_app_description">admin_app_description Text</string>
+    <string name="admin_app">admin_app Text</string>
+
+    <string name="un_done">Un-Done</string>
+    <string name="done">Done</string>
 </resources>
