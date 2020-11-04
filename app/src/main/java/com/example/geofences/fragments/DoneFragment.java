@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import com.example.geofences.R;
 import com.example.geofences.activities.HistoryActivity;
 import com.example.geofences.adapters.HistoryAdapter;
+import com.example.geofences.database.MyDatabase;
 import com.example.geofences.models.HistoryModel;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 public class DoneFragment extends Fragment {
     RecyclerView recyclerView;
     View view;
+    MyDatabase myDatabase;
 
     public DoneFragment() {
         // Required empty public constructor
@@ -46,13 +48,14 @@ public class DoneFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_done, container, false);
+        myDatabase = new MyDatabase(getActivity());
         return view;
     }
 
-    public void loadData(ArrayList<HistoryModel> list) {
+    public void loadData(ArrayList<HistoryModel> list, MyDatabase myDatabase) {
         LinearLayoutManager lm = new LinearLayoutManager(getActivity());
         lm.setOrientation(LinearLayoutManager.VERTICAL);
-        HistoryAdapter adapter = new HistoryAdapter(getActivity(), list);
+        HistoryAdapter adapter = new HistoryAdapter(getActivity(), list, myDatabase);
         recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(lm);
         recyclerView.setAdapter(adapter);
@@ -62,7 +65,7 @@ public class DoneFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        loadData(((HistoryActivity) getActivity()).getHistory(true));
+        loadData(((HistoryActivity) getActivity()).getHistory(true), myDatabase);
 
     }
 }

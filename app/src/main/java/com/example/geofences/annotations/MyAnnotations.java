@@ -13,6 +13,11 @@ public @interface MyAnnotations {
      String UN_DONE = "UN_DONE";
      String DONE = "DONE";
      String IS_BOOT_COMPLETED = "IS_BOOT_COMPLETED";
+     String ON = "ON";
+     String OFF = "OFF";
+     String EXIT = "EXIT";
+     String ENTER = "ENTER";
+     String BOTH = "BOTH";
 
 
 }

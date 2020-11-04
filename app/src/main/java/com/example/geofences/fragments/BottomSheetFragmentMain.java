@@ -2,10 +2,15 @@ package com.example.geofences.fragments;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
+import android.provider.Settings;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,8 +56,7 @@ public class BottomSheetFragmentMain extends BottomSheetDialogFragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_bottom_sheet_main, container, false);
         allActionsUtils = new AllActionsUtils(getActivity());
-        DevicePolicyManager mDevicePolicyManager = (DevicePolicyManager) getActivity()
-                .getSystemService(Context.DEVICE_POLICY_SERVICE);
+
 
         Button bluetoothOnOff = view.findViewById(R.id.bluetoothOnOff);
         Button audioButton = view.findViewById(R.id.audioButton);
@@ -61,7 +65,7 @@ public class BottomSheetFragmentMain extends BottomSheetDialogFragment {
         bluetoothOnOff.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                allActionsUtils.setBluetoothOnOff();
+                allActionsUtils.setBluetoothOnOff(true);
             }
         });
         audioButton.setOnClickListener(new View.OnClickListener() {
@@ -79,9 +83,16 @@ public class BottomSheetFragmentMain extends BottomSheetDialogFragment {
         airplane.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mDevicePolicyManager.lockNow();
-             }
+              }
+        });
+        lockScreen.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((MainActivity)getActivity()).lockPhone();
+              }
         });
         return view;
     }
+
+
 }

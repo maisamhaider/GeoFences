@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 
+import com.example.geofences.annotations.MyAnnotations;
 import com.example.geofences.broadcasts.GeoFenceReceiver;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.location.Geofence;
@@ -25,10 +26,34 @@ public class GeoFencerHelper extends ContextWrapper {
                 .setInitialTrigger(Geofence.GEOFENCE_TRANSITION_ENTER).build();
     }
 
-    public Geofence getGeofence(String id, LatLng latLng, float radius, int transitionType) {
-        return new Geofence.Builder().setCircularRegion(latLng.latitude, latLng.longitude, radius)
-                .setRequestId(id).setTransitionTypes(transitionType)
-                .setLoiteringDelay(5000).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
+    public Geofence getGeofence(String id, LatLng latLng, float radius, String transitionType, long expirationTime) {
+
+        if (transitionType.matches(MyAnnotations.ENTER)) {
+            return new Geofence.Builder()
+                    .setCircularRegion(latLng.latitude, latLng.longitude, radius)
+                    .setRequestId(id)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+                    .setLoiteringDelay(5000)
+                    .setExpirationDuration(expirationTime)
+                    .build();
+
+        } else if (transitionType.matches(MyAnnotations.EXIT)) {
+            return new Geofence.Builder()
+                    .setCircularRegion(latLng.latitude, latLng.longitude, radius)
+                    .setRequestId(id)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
+                    .setLoiteringDelay(5000)
+                    .setExpirationDuration(expirationTime)
+                    .build();
+        } else
+            return new Geofence.Builder()
+                    .setCircularRegion(latLng.latitude, latLng.longitude, radius)
+                    .setRequestId(id)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER
+                            | Geofence.GEOFENCE_TRANSITION_EXIT)
+                    .setLoiteringDelay(5000)
+                    .setExpirationDuration(expirationTime)
+                    .build();
     }
 
     public PendingIntent getPendingIntent() {

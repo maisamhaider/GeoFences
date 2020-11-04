@@ -7,4 +7,12 @@
 
     <string name="un_done">Un-Done</string>
     <string name="done">Done</string>
+    <string name="number_picker_formatter">%02d</string>
+
+    <string-array name="geo_fences_actions">
+        <item>ENTER</item>
+        <item>EXIT</item>
+        <item>BOTH</item>
+    </string-array>
+
 </resources>

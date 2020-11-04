@@ -40,4 +40,8 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation 'com.google.android.gms:play-services-location:17.1.0'
 
+    // number picker
+    implementation 'com.shawnlin:number-picker:2.4.11'
+
+
 }

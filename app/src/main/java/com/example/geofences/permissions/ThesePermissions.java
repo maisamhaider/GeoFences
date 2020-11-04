@@ -4,18 +4,24 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
+import android.util.Log;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.geofences.activities.MainActivity;
+import com.example.geofences.annotations.PermissionCodes;
+
 
 public class ThesePermissions {
-    private static final int REQ_CODE = 1101;
-    private static final int BACKGROUND_REQ_CODE = 1111;
+
     Context context;
 
     public ThesePermissions(Context context) {
@@ -62,7 +68,8 @@ public class ThesePermissions {
             if (b) {
                 return true;
             } else {
-                ActivityCompat.requestPermissions((AppCompatActivity) context, manifestPermissionArray, REQ_CODE);
+                ActivityCompat.requestPermissions((AppCompatActivity) context,
+                        manifestPermissionArray, PermissionCodes.REQ_CODE);
                 return false;
             }
         }
@@ -74,7 +81,8 @@ public class ThesePermissions {
 
             return true;
         } else
-            ActivityCompat.requestPermissions((AppCompatActivity) context, manifestPermissionArray, REQ_CODE);
+            ActivityCompat.requestPermissions((AppCompatActivity) context,
+                    manifestPermissionArray,PermissionCodes.REQ_CODE);
         return false;
 
     }
@@ -88,7 +96,9 @@ public class ThesePermissions {
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     ActivityCompat.requestPermissions((Activity) context, new String[]
-                            {Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_REQ_CODE);
+                            {Manifest.permission.ACCESS_BACKGROUND_LOCATION},
+                            PermissionCodes.BACKGROUND_REQ_CODE);
+                    dialog.dismiss();
                 }
 
 
@@ -101,5 +111,32 @@ public class ThesePermissions {
         });
         androidx.appcompat.app.AlertDialog dialog = adb.create();
         dialog.show();
+    }
+
+    public  boolean checkSystemWritePermission(Activity context){
+        boolean permission;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            permission = Settings.System.canWrite(context);
+        } else {
+             permission = ContextCompat.checkSelfPermission(context,
+                    Manifest.permission.WRITE_SETTINGS)
+                    == PackageManager.PERMISSION_GRANTED;
+        }
+       return permission;
+    }
+    public void openAndroidPermissionsMenu(Activity context) {
+
+        Intent intent = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
+            intent.setData(Uri.parse("package:" + context.getPackageName()));
+            context.startActivity(intent);
+        } else {
+                ActivityCompat.requestPermissions(context,
+                        new String[]{Manifest.permission.WRITE_SETTINGS},
+                        PermissionCodes.CODE_WRITE_SETTINGS_PERMISSION);
+            }
+
+
     }
 }

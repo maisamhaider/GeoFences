@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.provider.Settings;
 import android.widget.Toast;
@@ -15,29 +16,33 @@ public class AllActionsUtils {
     private Context context;
     boolean isHeadphoneCtd = false;
     private AudioManager am;
-    BluetoothAdapter bluetoothAdapter;
-    Activity activity;
+    private BluetoothAdapter bluetoothAdapter;
+    private Activity activity;
+    private WifiManager wifiManager;
 
     public AllActionsUtils(Context context) {
         this.context = context;
+        wifiManager = (WifiManager)
+                context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
     }
 
     public AllActionsUtils(Context context, Activity activity) {
         this.context = context;
         this.activity = activity;
+        wifiManager = (WifiManager)
+                context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
     }
 
 
     public void setAudioMode(String whatToSet) {
 
-        am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        am = (AudioManager) context.getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         //For Normal mode
         if (whatToSet.matches(MyAnnotations.RINGER_MODE_NORMAL)) {
             am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
         } else
-        //For Silent mode
+            //For Silent mode
             if (whatToSet.matches(MyAnnotations.RINGER_MODE_SILENT)) {
-
                 am.setRingerMode(AudioManager.RINGER_MODE_SILENT);
             } else
                 //For Vibrate mode
@@ -46,29 +51,39 @@ public class AllActionsUtils {
 
     }
 
-    public void setBluetoothOnOff() {
+    public void setBluetoothOnOff(boolean onIt) {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
         if (bluetoothAdapter == null) {
             Toast.makeText(context, "Device does not supported ", Toast.LENGTH_SHORT).show();
-        } else {
+        } else if (onIt) {
             if (!bluetoothAdapter.isEnabled()) {
                 bluetoothAdapter.enable();
-            } else {
-                bluetoothAdapter.disable();
+            }
+
+        } else {
+            if (bluetoothAdapter.isEnabled()) {
+                bluetoothAdapter.enable();
             }
         }
 
 
     }
 
+    public void setWifiOnOff(boolean trueFalse) {
 
-    public void SetAirplaneMode(boolean enabled){
+        if (trueFalse) {
+            wifiManager.setWifiEnabled(!trueFalse);
+
+        } else
+            wifiManager.setWifiEnabled(trueFalse);
+    }
+
+
+    public void SetAirplaneMode(boolean enabled) {
         //---toggle Airplane mode---
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (Settings.System.canWrite(context))
-            {
-                Settings.System.putInt(context.getContentResolver(),Settings.Global.AIRPLANE_MODE_ON, enabled ? 1 : 0);
+            if (Settings.System.canWrite(context)) {
+                Settings.System.putInt(context.getContentResolver(), Settings.Global.AIRPLANE_MODE_ON, enabled ? 1 : 0);
                 Intent i = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
                 i.putExtra("state", enabled);
                 context.sendBroadcast(i);
@@ -91,23 +106,23 @@ public class AllActionsUtils {
 
     }
 
-    public boolean getBluetoothOnOff() {
+    public boolean isBluetoothOn() {
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
 
             return false;
-        } else if (bluetoothAdapter.isEnabled()) {
-            return true;
-
-        } else
-            return false;
+        } else return bluetoothAdapter.isEnabled();
     }
 
-    public boolean getAirplaneModeOn() {
+    public boolean isAirplaneModeOn() {
 
         return Settings.System.getInt(context.getContentResolver()
                 , Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
     }
 
+    public boolean isWifiEnable() {
+
+        return wifiManager.isWifiEnabled();
+    }
 }
