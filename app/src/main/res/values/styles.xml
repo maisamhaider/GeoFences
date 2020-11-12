@@ -2,16 +2,33 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/purple_200</item>
-        <item name="colorPrimaryDark">@color/purple_500</item>
-        <item name="colorAccent">@color/purple_700</item>
+        <item name="colorPrimary">@color/mainTeal</item>
+        <item name="colorPrimaryDark">@color/mainBlack</item>
+        <item name="colorAccent">@color/mainTeal</item>
     </style>
 
     <style name="CustomBottomSheetDialogTheme" parent="Theme.Design.Light.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/CustomBottomSheetStyle</item>
     </style>
+
     <style name="CustomBottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
         <item name="android:background">@android:color/transparent</item>
     </style>
 
+    <style name="AppTheme.picker" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:colorPrimaryDark">@color/white</item>
+        <item name="colorAccent">@color/white</item>
+        <item name="colorSecondary">@color/white</item>
+
+
+    </style>
+
+    <style name="AppTheme.checkBox" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:colorPrimaryDark">@color/mainTeal</item>
+        <item name="android:colorPrimary">@color/mainTeal</item>
+        <item name="android:textColorSecondary">@color/mainTeal</item>
+        <item name="colorAccent">@color/mainTeal</item>
+    </style>
 </resources>

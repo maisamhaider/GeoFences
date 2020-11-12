@@ -80,7 +80,7 @@ public class MyDatabase extends SQLiteOpenHelper {
                 ",SILENT TEXT" +
                 ",WIFI TEXT" +
                 ",LOCK_SCREEN TEXT)");
-        db.execSQL("create table " + PER_DAY_TABLE + "(PRIMARY_ID INTEGER PRIMARY KEY AUTOINCREMENT," +
+        db.execSQL("create table " + PER_DAY_TABLE + "(PRIMARY_ID INTEGER PRIMARY KEY," +
                 "STARTED_TIME)");
     }
 
@@ -90,12 +90,14 @@ public class MyDatabase extends SQLiteOpenHelper {
         db.execSQL(" DROP TABLE IF EXISTS " + MAIN_TABLE);
         db.execSQL(" DROP TABLE IF EXISTS " + ON_ENTERED);
         db.execSQL(" DROP TABLE IF EXISTS " + ON_EXIT);
+        db.execSQL(" DROP TABLE IF EXISTS " + PER_DAY_TABLE);
         onCreate(db);
     }
 
     public long insert(String startTime) {
         SQLiteDatabase database = getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(PRIMARY_ID, 0);
         values.put(STARTED_TIME, startTime);
         return database.insert(PER_DAY_TABLE, null, values);
     }
@@ -155,7 +157,7 @@ public class MyDatabase extends SQLiteOpenHelper {
     public int updateDate(String id, String date) {
         SQLiteDatabase database = getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(STATE, date);
+        values.put(STARTED_TIME, date);
         return database.update(PER_DAY_TABLE, values, MyDatabase.PRIMARY_ID + "=?",
                 new String[]{id});
     }

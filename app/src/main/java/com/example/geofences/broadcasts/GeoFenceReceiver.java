@@ -1,9 +1,12 @@
 package com.example.geofences.broadcasts;
 
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.Build;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -43,21 +46,23 @@ public class GeoFenceReceiver extends BroadcastReceiver {
         switch (transitionType) {
             case Geofence.GEOFENCE_TRANSITION_ENTER:
                 Toast.makeText(context, "GEOFENCE_TRANSITION_ENTER", Toast.LENGTH_SHORT).show();
-                action(context,String.valueOf(geofenceList.get(0).getRequestId()));
+                action(context, String.valueOf(geofenceList.get(0).getRequestId()));
                 break;
             case Geofence.GEOFENCE_TRANSITION_DWELL:
                 Toast.makeText(context, "GEOFENCE_TRANSITION_DWELL", Toast.LENGTH_SHORT).show();
-                action(context,String.valueOf(geofenceList.get(0).getRequestId()));
+                action(context, String.valueOf(geofenceList.get(0).getRequestId()));
                 break;
             case Geofence.GEOFENCE_TRANSITION_EXIT:
                 Toast.makeText(context, "GEOFENCE_TRANSITION_EXIT", Toast.LENGTH_SHORT).show();
-                action(context,String.valueOf(geofenceList.get(0).getRequestId()));
+                action(context, String.valueOf(geofenceList.get(0).getRequestId()));
                 break;
         }
 
     }
 
     private void action(Context context, String id) {
+
+
         AllActionsUtils allActionsUtils = new AllActionsUtils(context);
         AdminHelper adminHelper = new AdminHelper(context);
         MyDatabase db = new MyDatabase(context);
@@ -80,14 +85,12 @@ public class GeoFenceReceiver extends BroadcastReceiver {
                     enBluetooth = cursor1.getString(2);
                     enWifi = cursor1.getString(4);
                     enLock = cursor1.getString(5);
-                    if (enSilent.matches(MyAnnotations.ON)) {
-                        //TODO Set Silent
-                        Toast.makeText(context, "Silent", Toast.LENGTH_SHORT).show();
-                    } else {
-                        //TODO Set Ringing
-                        Toast.makeText(context, "Ringing", Toast.LENGTH_SHORT).show();
+                    // set Audio
+                    if (!enSilent.matches(MyAnnotations.NULL)) {
 
+                        audioFun(enSilent, context, allActionsUtils);
                     }
+
                     allActionsUtils.setBluetoothOnOff(enBluetooth.matches(MyAnnotations.ON));
                     allActionsUtils.setWifiOnOff(enWifi.matches(MyAnnotations.ON));
                     if (enLock.matches(MyAnnotations.ON)) {
@@ -104,7 +107,7 @@ public class GeoFenceReceiver extends BroadcastReceiver {
 //                db.delete(id);
 //                db.delete(true, id);
                 db.update(id, MyAnnotations.DONE);
-                removeGeofence(context,id);
+                removeGeofence(context, id);
 
             } else if (type.matches(MyAnnotations.EXIT)) {
                 Cursor cursor1 = db.retrieve(false, id);
@@ -113,14 +116,12 @@ public class GeoFenceReceiver extends BroadcastReceiver {
                     exBluetooth = cursor1.getString(2);
                     exWifi = cursor1.getString(4);
                     exLock = cursor1.getString(5);
-                    if (exSilent.matches(MyAnnotations.ON)) {
-                        allActionsUtils.setAudioMode(MyAnnotations.RINGER_MODE_SILENT);
+                    // set Audio
+                    if (!enSilent.matches(MyAnnotations.NULL)) {
 
-                    } else {
-                         Toast.makeText(context, "Ringing", Toast.LENGTH_SHORT).show();
-                        allActionsUtils.setAudioMode(MyAnnotations.RINGER_MODE_NORMAL);
-
+                        audioFun(exSilent, context, allActionsUtils);
                     }
+
                     allActionsUtils.setBluetoothOnOff(exBluetooth.matches(MyAnnotations.ON));
                     allActionsUtils.setWifiOnOff(exWifi.matches(MyAnnotations.ON));
 
@@ -138,7 +139,7 @@ public class GeoFenceReceiver extends BroadcastReceiver {
 //                db.delete(id);
 //                db.delete(true, id);
                 db.update(id, MyAnnotations.DONE);
-                removeGeofence(context,id);
+                removeGeofence(context, id);
 
 
             } else {
@@ -148,13 +149,10 @@ public class GeoFenceReceiver extends BroadcastReceiver {
                     enBluetooth = cursor1.getString(2);
                     enWifi = cursor1.getString(4);
                     enLock = cursor1.getString(5);
-                    if (enSilent.matches(MyAnnotations.ON)) {
-                        allActionsUtils.setAudioMode(MyAnnotations.RINGER_MODE_SILENT);
+                    // set Audio
+                    if (!enSilent.matches(MyAnnotations.NULL)) {
 
-                    } else {
-                         Toast.makeText(context, "Ringing", Toast.LENGTH_SHORT).show();
-                        allActionsUtils.setAudioMode(MyAnnotations.RINGER_MODE_NORMAL);
-
+                        audioFun(enSilent, context, allActionsUtils);
                     }
                     allActionsUtils.setBluetoothOnOff(enBluetooth.matches(MyAnnotations.ON));
                     allActionsUtils.setWifiOnOff(enWifi.matches(MyAnnotations.ON));
@@ -165,7 +163,8 @@ public class GeoFenceReceiver extends BroadcastReceiver {
 
 //                            adminHelper.intentToAdmin();
                         }
-                    }}
+                    }
+                }
 
                 Cursor cursor2 = db.retrieve(false, id);
                 if (cursor2.moveToNext()) {
@@ -173,16 +172,13 @@ public class GeoFenceReceiver extends BroadcastReceiver {
                     exBluetooth = cursor1.getString(2);
                     exWifi = cursor1.getString(4);
                     exLock = cursor1.getString(5);
-                    if (exSilent.matches(MyAnnotations.ON)) {
-                         Toast.makeText(context, "Silent", Toast.LENGTH_SHORT).show();
-                        allActionsUtils.setAudioMode(MyAnnotations.RINGER_MODE_SILENT);
 
-                    } else {
-                         Toast.makeText(context, "Ringing", Toast.LENGTH_SHORT).show();
-                        allActionsUtils.setAudioMode(MyAnnotations.RINGER_MODE_NORMAL);
+                    // set Audio
+                    if (!enSilent.matches(MyAnnotations.NULL)) {
 
+                        audioFun(exSilent, context, allActionsUtils);
                     }
-                    allActionsUtils.setBluetoothOnOff(exBluetooth.matches(MyAnnotations.ON));
+                     allActionsUtils.setBluetoothOnOff(exBluetooth.matches(MyAnnotations.ON));
                     allActionsUtils.setWifiOnOff(exWifi.matches(MyAnnotations.ON));
                     if (exLock.matches(MyAnnotations.ON)) {
                         if (adminHelper.isActive()) {
@@ -197,13 +193,13 @@ public class GeoFenceReceiver extends BroadcastReceiver {
 //                db.delete(id);
 //                db.delete(true, id);
                 db.update(id, MyAnnotations.DONE);
-                removeGeofence(context,id);
+                removeGeofence(context, id);
             }
         }
 
     }
-    public void removeGeofence(Context context,String id)
-    {
+
+    public void removeGeofence(Context context, String id) {
         GeofencingClient geofencingClient = LocationServices.getGeofencingClient(context);
         List<String> idList = new ArrayList<>();
         idList.add(String.valueOf(id));
@@ -219,6 +215,21 @@ public class GeoFenceReceiver extends BroadcastReceiver {
 
             }
         });
-     }
+    }
+
+    public void audioFun(String ringingMode, Context context, AllActionsUtils allActionsUtils) {
+        NotificationManager mNotificationManager = (NotificationManager)
+                context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+                allActionsUtils.setAudioMode(ringingMode);
+            }
+
+        }
+        else
+        {
+            allActionsUtils.setAudioMode(ringingMode);
+        }
+    }
 
 }

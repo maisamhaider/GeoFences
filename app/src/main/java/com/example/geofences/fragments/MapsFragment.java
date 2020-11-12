@@ -1,6 +1,7 @@
 package com.example.geofences.fragments;
 
 import android.Manifest;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -8,24 +9,26 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.text.TextUtils;
-import android.text.format.DateUtils;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.NumberPicker;
-import android.widget.Spinner;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,13 +36,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
-import androidx.core.util.TimeUtils;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.geofences.R;
+import com.example.geofences.activities.HistoryActivity;
 import com.example.geofences.activities.MainActivity;
+import com.example.geofences.activities.SettingsActivity;
 import com.example.geofences.annotations.MyAnnotations;
 import com.example.geofences.annotations.NumbersAnnotation;
 import com.example.geofences.database.MyDatabase;
@@ -57,34 +63,45 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-import java.util.Calendar;
+import java.lang.reflect.Field;
+import java.util.Objects;
 
 
-public class MapsFragment extends Fragment {
+public class MapsFragment extends Fragment implements LocationListener {
     private GeofencingClient geofencingClient;
+    private GoogleMap map;
+    private LocationManager locationManager;
     private ThesePermissions thesePermissions;
     private MyPreferences preferences;
-    private GoogleMap map;
     private MyDatabase myDatabase;
     private GeoFencerHelper geoFencerHelper;
     private TimeUtil timeUtils;
-    private float geofenceCircle = 50;
     private TextView geoFencesAmountTv;
     private final long geoFencesLimit = 20;
     AlertDialog.Builder builder1;
     private MainActivity mainActivity;
-
+    NotificationManager mNotificationManager;
     AlertDialog dialog1;
     AllActionsUtils allActionsUtils;
+    MyPreferences myPreferences;
 
+    TextView geoFenceType_tv;
+    TextView circle_tv;
+    TextView ringMode_tv, exRingMode_tv;
+    ImageView meters_iv;
+    private float geofenceCircle = NumbersAnnotation.BY_WALK;
+    String geofenceType = MyAnnotations.ENTER;
+    String enSilent = MyAnnotations.NULL;
+    String exSilent = MyAnnotations.NULL;
+
+    ConstraintLayout onEntered_cl;
+    ConstraintLayout onExit_cl;
     private OnMapReadyCallback callback = new OnMapReadyCallback() {
         /**
          * Manipulates the map once available.
@@ -102,11 +119,9 @@ public class MapsFragment extends Fragment {
 
             enableUserCurrentLocation();
             if (myDatabase.retrieveRowsAmount() != 0) {
-
                 if (preferences.getBoolean(MyAnnotations.IS_BOOT_COMPLETED, false)) {
                     //add geo_fences again if user want to re-add undone geo_fences
                     onBootComplete(getActivity(), true);
-                    geoFencesAmountTv.setText(String.valueOf(geoFencesLimit - getAmountOfUndoneInDate()));
 
                 } else {
                     //just set mark and circle.do not add geo_fences
@@ -116,7 +131,7 @@ public class MapsFragment extends Fragment {
             map.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
                 @Override
                 public void onMapLongClick(LatLng latLng) {
-                    if (getAmountOfUndoneInDate() < geoFencesLimit) {
+                    if (getGeoFenceLimit() < geoFencesLimit) {
                         addGeoDialog(latLng);
                     } else {
                         Toast.makeText(getActivity(), "Limit is reached", Toast.LENGTH_SHORT).show();
@@ -124,53 +139,16 @@ public class MapsFragment extends Fragment {
                 }
             });
 
-
             map.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
                 @Override
                 public boolean onMyLocationButtonClick() {
-//                    if (!allActionsUtils.isWifiEnable()) {
-//                        showWifiDialog("Wifi", "Connect to wifi or data if you want to use this option");
-//                    }
-                    if (!isLocationOn()) {
+                    if (!isLocationEnabled(getActivity())) {
                         showDialog("Location", "To move on your current location you have to ON the device location.");
                     }
                     return false;
                 }
             });
-            map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-                @Override
-                public boolean onMarkerClick(Marker marker) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
-                            .setTitle("Alert")
-                            .setMessage("Are you sure you want to remove the mark ?")
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-
-                                    //TODO think on getID that is it the geofence id or not
-                                    // just update in database when the mark is removed.
-
-//                                    String id = geofence.getRequestId();
-//                                    myDatabase.update(, MyAnnotations.DONE);
-                                    marker.remove();
-                                    map.clear();
-                                    setFromDbToGeoFenceAgain(false);
-
-                                }
-                            }).setNegativeButton("No", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            });
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-                    return false;
-                }
-            });
-
         }
-
 
     };
 
@@ -181,6 +159,7 @@ public class MapsFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_maps, container, false);
         geoFencesAmountTv = view.findViewById(R.id.geo_fences_amount_tv);
+        ImageView history_iv = view.findViewById(R.id.history_iv);
         preferences = new MyPreferences(getActivity());
         mainActivity = ((MainActivity) getActivity());
         thesePermissions = new ThesePermissions(getActivity());
@@ -188,20 +167,28 @@ public class MapsFragment extends Fragment {
         geofencingClient = LocationServices.getGeofencingClient(getActivity());
         geoFencerHelper = new GeoFencerHelper(getActivity());
         myDatabase = new MyDatabase(getActivity());
+        mNotificationManager = (NotificationManager)
+                getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+        myPreferences = new MyPreferences(getActivity());
         // set listeners
 
         //set value
-        geoFencesAmountTv.setText(String.valueOf(geoFencesLimit - getAmountOfUndoneInDate()));
         timeUtils = new TimeUtil();
-
         // check time if its 12am then change the time and renew the limit of geofences
+
         if (checkGeoFenceChangeDate()) {
             geoFencesAmountTv.setText(String.valueOf(geoFencesLimit));
-
-        } else {
-
+        }else{
+            geoFencesAmountTv.setText(String.valueOf(geoFencesLimit - getGeoFenceLimit()));
         }
 
+        history_iv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PopupWindow popupWindow = menuPopupMenu();
+                popupWindow.showAtLocation(history_iv, Gravity.TOP | Gravity.START, 16, 16);
+            }
+        });
         return view;
     }
 
@@ -234,7 +221,7 @@ public class MapsFragment extends Fragment {
                                     String exWifi,
                                     String exScreenLock
     ) {
-        if (getAmountOfUndoneInDate() < geoFencesLimit) {
+        if (getGeoFenceLimit() < geoFencesLimit) {
             LatLng location = new LatLng(latitude, longitude);
             // if device is restarted or new geo-fence wanted to be added in this condition we need
             // to add geo_fences to database
@@ -289,7 +276,6 @@ public class MapsFragment extends Fragment {
                     addGeofence(location, geofenceCircle, MyAnnotations.BOTH, String.valueOf(insert), expirationTime);
                 }
 
-                geoFencesAmountTv.setText(String.valueOf(geoFencesLimit - getAmountOfUndoneInDate()));
             } else {
                 Toast.makeText(geoFencerHelper, "Error", Toast.LENGTH_SHORT).show();
             }
@@ -325,6 +311,11 @@ public class MapsFragment extends Fragment {
                     public void onSuccess(Void aVoid) {
                         Toast.makeText(getActivity(), "Geofence added Successful",
                                 Toast.LENGTH_SHORT).show();
+                        myPreferences.addLong(MyAnnotations.GEO_FENCE_LIMIT,
+                                myPreferences.getLong(MyAnnotations.GEO_FENCE_LIMIT, 0)
+                                        + 1);
+                        geoFencesAmountTv.setText(String.valueOf(geoFencesLimit - getGeoFenceLimit()));
+
                     }
                 }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -376,25 +367,16 @@ public class MapsFragment extends Fragment {
     }
 
     // is location on or off
-    public boolean isLocationOn() {
-        return isLocationEnabled(getActivity()); // application context
-    }
-
     public boolean isLocationEnabled(Context context) {
         int locationMode = 0;
         String locationProviders;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            try {
-                locationMode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
-            } catch (Settings.SettingNotFoundException e) {
-                e.printStackTrace();
-            }
-            return locationMode != Settings.Secure.LOCATION_MODE_OFF;
-        } else {
-            locationProviders = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
-            return !TextUtils.isEmpty(locationProviders);
+        try {
+            locationMode = Settings.Secure.getInt(context.getContentResolver(),
+                    Settings.Secure.LOCATION_MODE);
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
         }
+        return locationMode != Settings.Secure.LOCATION_MODE_OFF;
     }
 
     public void showDialog(String title, String message) {
@@ -444,6 +426,9 @@ public class MapsFragment extends Fragment {
                     public void onClick(DialogInterface dialog, int which) {
                         //if user want to add all geo_fences again
                         setFromDbToGeoFenceAgain(bootCompleted);
+                        myPreferences.setBoolean("IS_BOOT_COMPLETED", false);
+                        geoFencesAmountTv.setText(String.valueOf(geoFencesLimit - getGeoFenceLimit()));
+
                         dialog.dismiss();
                     }
                 }).setNegativeButton("cancel", new DialogInterface.OnClickListener() {
@@ -582,40 +567,52 @@ public class MapsFragment extends Fragment {
         TextView negativeTv = view.findViewById(R.id.negative_tv);
         TextView positiveTv = view.findViewById(R.id.positive_tv);
         NumberPicker numberPicker = view.findViewById(R.id.number_picker);
-        Spinner spinner = view.findViewById(R.id.spinner);
-        ConstraintLayout onEntered_ll = view.findViewById(R.id.onEntered_cl);
-        ConstraintLayout onExit_ll = view.findViewById(R.id.onExit_cl);
+        onEntered_cl = view.findViewById(R.id.onEntered_cl);
+        onExit_cl = view.findViewById(R.id.onExit_cl);
 
-        SwitchCompat enteredSilent_switch = view.findViewById(R.id.enteredSilent_switch);
+        CardView circleSize_cv = view.findViewById(R.id.circleSize_cv);
+        circle_tv = view.findViewById(R.id.circle_tv);
+        meters_iv = view.findViewById(R.id.meters_iv);
+
+        CardView geofenceType_cl = view.findViewById(R.id.geofenceType_cl);
+        geoFenceType_tv = view.findViewById(R.id.geoFenceType_tv);
+
+        CardView enRingMode_cv = view.findViewById(R.id.enRingMode_cv);
+        ringMode_tv = view.findViewById(R.id.ringMode_tv);
+        CardView exRingMode_cv = view.findViewById(R.id.exRingMode_cv);
+        exRingMode_tv = view.findViewById(R.id.exRingMode_tv);
+
+
         SwitchCompat enteredBluetooth_switch = view.findViewById(R.id.enteredBluetooth_switch);
         SwitchCompat enteredWifi_switch = view.findViewById(R.id.enteredWifi_switch);
         CheckBox enteredLock_cb = view.findViewById(R.id.enteredLock_cb);
 
-        SwitchCompat exitSilent_switch = view.findViewById(R.id.exitSilent_switch);
         SwitchCompat exitBluetooth_switch = view.findViewById(R.id.exitBluetooth_switch);
         SwitchCompat exitWifi_switch = view.findViewById(R.id.exitWifi_switch);
         CheckBox exitLock_cb = view.findViewById(R.id.exitLock_cb);
 
+        //
+        onEntered_cl.setVisibility(View.VISIBLE);
+        onExit_cl.setVisibility(View.GONE);
 
-        final boolean[] isSpinnerListened = {false};
-        onEntered_ll.setVisibility(View.GONE);
-        onExit_ll.setVisibility(View.GONE);
+        final boolean[] exSpinnerListened = {false};
 
-        ArrayAdapter<CharSequence> arrayAdapter = ArrayAdapter.createFromResource(getActivity()
-                , R.array.geo_fences_actions, android.R.layout.simple_spinner_item);
 
-//        spinner.setDropDownVerticalOffset(R.layout.support_simple_spinner_dropdown_item);
-
-        spinner.setAdapter(arrayAdapter);
         titleTv.setText("Area Name");
         negativeTv.setText("Dismiss");
         positiveTv.setText("Done");
+
         numberPicker.setMaxValue(24);
         numberPicker.setMinValue(1);
+        setNumberPickerTextColor(numberPicker);
+
+        //variables
 
 
         AlertDialog dialog = builder.create();
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow().getDecorView().setTop(100);
+        dialog.getWindow().getDecorView().setBottom(100);
         dialog.show();
 
         negativeTv.setOnClickListener(new View.OnClickListener() {
@@ -624,54 +621,82 @@ public class MapsFragment extends Fragment {
                 dialog.dismiss();
             }
         });
-        spinner.setSelection(0);
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                isSpinnerListened[0] = true;
-                if (position == 0) {
-                    onEntered_ll.setVisibility(View.VISIBLE);
-                    onExit_ll.setVisibility(View.GONE);
 
-                } else if (position == 1) {
-                    onEntered_ll.setVisibility(View.GONE);
-                    onExit_ll.setVisibility(View.VISIBLE);
+        circleSize_cv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PopupWindow popupWindow = circleSizePopupMenu();
+                popupWindow.showAsDropDown(circleSize_cv);
+            }
+        });
+
+        geofenceType_cl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PopupWindow popupWindow = geoFencePopupMenu();
+                popupWindow.showAsDropDown(geofenceType_cl, 0, 0);
+            }
+        });
+
+        enRingMode_cv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+                        doNoDisturbPermissionDialog();
+                    } else {
+
+                        PopupWindow popupWindow = ringingModePopupMenu(true);
+                        popupWindow.showAsDropDown(enRingMode_cv, 0, 0);
+
+
+                    }
+
                 } else {
-                    onEntered_ll.setVisibility(View.VISIBLE);
-                    onExit_ll.setVisibility(View.VISIBLE);
+                    PopupWindow popupWindow = ringingModePopupMenu(false);
+                    popupWindow.showAsDropDown(enRingMode_cv, 0, 0);
+
                 }
             }
-
+        });
+        exRingMode_cv.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+                        doNoDisturbPermissionDialog();
+                    } else {
 
+                        PopupWindow popupWindow = ringingModePopupMenu(false);
+                        popupWindow.showAsDropDown(enRingMode_cv, 0, 0);
+
+
+                    }
+                } else {
+                    PopupWindow popupWindow = ringingModePopupMenu(false);
+                    popupWindow.showAsDropDown(enRingMode_cv, 0, 0);
+
+                }
             }
         });
-        enteredSilent_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        enRingMode_cv.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    if (!mainActivity.checkPer()) {
-                        enteredSilent_switch.setChecked(false);
-                        mainActivity.setPer();
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+                        doNoDisturbPermissionDialog();
+                    } else {
+
+                        PopupWindow popupWindow = ringingModePopupMenu(true);
+                        popupWindow.showAsDropDown(enRingMode_cv, 0, 0);
+
+
                     }
                 }
             }
         });
-        exitSilent_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    if (!mainActivity.checkPer()) {
-                        exitSilent_switch.setChecked(false);
-                        mainActivity.setPer();
-                    }
-
-                }
 
 
-            }
-        });
         enteredLock_cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -734,20 +759,13 @@ public class MapsFragment extends Fragment {
             @Override
             public void onClick(View v) {
 
-                Toast.makeText(getActivity(), "Button clickec", Toast.LENGTH_SHORT).show();
                 String title = messageEt.getText().toString();
-                String geofenceType = spinner.getSelectedItem().toString();
-                if (!isSpinnerListened[0]) {
-                    geofenceType = MyAnnotations.ENTER;
-                }
-                String enSilent, enBluetooth, enWifi, enLock;
-                String exSilent, exBluetooth, exWifi, exLock;
+
+
+                String enBluetooth, enWifi, enLock;
+                String exBluetooth, exWifi, exLock;
 //                for entered
-                if (enteredSilent_switch.isChecked()) {
-                    enSilent = MyAnnotations.ON;
-                } else {
-                    enSilent = MyAnnotations.OFF;
-                }
+
                 if (enteredBluetooth_switch.isChecked()) {
                     enBluetooth = MyAnnotations.ON;
 
@@ -771,11 +789,6 @@ public class MapsFragment extends Fragment {
                 }
 
                 // for exit
-                if (exitSilent_switch.isChecked()) {
-                    exSilent = MyAnnotations.ON;
-                } else {
-                    exSilent = MyAnnotations.OFF;
-                }
                 if (exitBluetooth_switch.isChecked()) {
                     exBluetooth = MyAnnotations.ON;
 
@@ -845,48 +858,30 @@ public class MapsFragment extends Fragment {
             }
         });
 
-
-//        spinner.setOnI(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//
-//                if (position==0)
-//                {
-//                    onEntered_ll.setVisibility(View.VISIBLE);
-//                    onExit_ll.setVisibility(View.GONE);
-//
-//                }else if (position==1)
-//                {
-//                    onEntered_ll.setVisibility(View.GONE);
-//                    onExit_ll.setVisibility(View.VISIBLE);
-//                }
-//                else
-//                {
-//                    onEntered_ll.setVisibility(View.VISIBLE);
-//                    onExit_ll.setVisibility(View.VISIBLE);
-//                }
-//
-//            }
-//        });
     }
 
     public boolean checkGeoFenceChangeDate() {
         Cursor cursor = myDatabase.retrieveDate();
         if (cursor.getCount() == 0) {
-            myDatabase.insert(String.valueOf(timeUtils.getNowMillis()));
+            long i = myDatabase.insert(String.valueOf(timeUtils.get12AmMillis()));
+            myPreferences.addLong(MyAnnotations.GEO_FENCE_LIMIT, (long) 0);
             return true;
-        } else {
+        }
+
             while (cursor.moveToNext()) {
                 long time = Long.parseLong(cursor.getString(1));
-                if (time < timeUtils.get12AmMillis()) {
-                    myDatabase.updateDate("0", String.valueOf(timeUtils.getNowMillis()));
+                long currentTime = timeUtils.getNowMillis();
+                String stime = timeUtils.getFormattedTime(time);
+                String scurrentTime = timeUtils.getFormattedTime(currentTime);
+                if (currentTime > time) {
+
+                    String date12crrentTime = timeUtils.getFormattedTime(timeUtils.get12AmMillis());
+                    myDatabase.updateDate("0", String.valueOf(timeUtils.get12AmMillis()));
+                    myPreferences.addLong(MyAnnotations.GEO_FENCE_LIMIT, (long) 0);
                     return true;
                 }
             }
-
-        }
-        return false;
-
+            return false;
     }
 
     public long getGeoFenceChangeTime() {
@@ -904,23 +899,296 @@ public class MapsFragment extends Fragment {
 
     }
 
-    public long getAmountOfUndoneInDate() {
-        long time = 0;
-        Cursor cursor = myDatabase.retrieve();
-        if (cursor.getCount() == 0) {
-            return 0;
-        } else
+    public long getGeoFenceLimit() {
 
-            while (cursor.moveToNext()) {
-                long date = Long.parseLong(cursor.getString(9));
-                if (DateUtils.isToday(date)) {
+        return myPreferences.getLong(MyAnnotations.GEO_FENCE_LIMIT, 0);
 
-                    time += 1;
+    }
+
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+    }
+
+    public void doNoDisturbPermissionDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+                .setTitle("Do no disturb").setMessage(MyAnnotations.DO_NOT_DISTURB_MESSAGE)
+                .setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+                                // Check if the notification policy access has been granted for the app.
+                                Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+                                startActivity(intent);
+                            }
+
+                        }
+                    }
+                }).setNegativeButton("Decline", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private PopupWindow menuPopupMenu() {
+        final PopupWindow popupWindow = new PopupWindow(getContext());
+        final LayoutInflater inflater = (LayoutInflater) Objects.requireNonNull(getActivity())
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = inflater.inflate(R.layout.menu_view, null);
+
+        ConstraintLayout history_cl = view.findViewById(R.id.history_cl);
+        ConstraintLayout settings_cl = view.findViewById(R.id.settings_cl);
+        ImageView menu_iv = view.findViewById(R.id.menu_iv);
+
+        popupWindow.setFocusable(true);
+        popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+        popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+        popupWindow.setContentView(view);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+        history_cl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getActivity(), HistoryActivity.class));
+                popupWindow.dismiss();
+            }
+        });
+        settings_cl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getActivity(), SettingsActivity.class));
+                popupWindow.dismiss();
+            }
+        });
+        menu_iv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                popupWindow.dismiss();
+
+            }
+        });
+
+        return popupWindow;
+    }
+
+    private PopupWindow circleSizePopupMenu() {
+        final PopupWindow popupWindow = new PopupWindow(getContext());
+        final LayoutInflater inflater = (LayoutInflater) Objects.requireNonNull(getActivity())
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = inflater.inflate(R.layout.circle_size_popup_menu_view, null);
+
+        ConstraintLayout byWalk_cl = view.findViewById(R.id.byWalk_cl);
+        ConstraintLayout byCycle_cl = view.findViewById(R.id.byCycle_cl);
+        ConstraintLayout byBus_cl = view.findViewById(R.id.byBus_cl);
+        ConstraintLayout byCar_cl = view.findViewById(R.id.byCar_cl);
+
+        popupWindow.setFocusable(true);
+        popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+        popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+        popupWindow.setContentView(view);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+        byWalk_cl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                circle_tv.setText(MyAnnotations.BY_WALK);
+                geofenceCircle = NumbersAnnotation.BY_WALK;
+                meters_iv.setImageDrawable(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.ic_man, null));
+                popupWindow.dismiss();
+            }
+        });
+        byCycle_cl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                circle_tv.setText(MyAnnotations.BY_CYCLE);
+                geofenceCircle = NumbersAnnotation.BY_CYCLE;
+                meters_iv.setImageDrawable(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.ic_bicycle, null));
+                popupWindow.dismiss();
+
+            }
+        });
+        byBus_cl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                circle_tv.setText(MyAnnotations.BY_BUS);
+                geofenceCircle = NumbersAnnotation.BY_BUS;
+                meters_iv.setImageDrawable(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.ic_bus, null));
+                popupWindow.dismiss();
+
+            }
+        });
+        byCar_cl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                circle_tv.setText(MyAnnotations.BY_CAR);
+                geofenceCircle = NumbersAnnotation.BY_CAR;
+                meters_iv.setImageDrawable(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.ic_car_alt, null));
+                popupWindow.dismiss();
+
+            }
+        });
+        return popupWindow;
+    }
+
+
+    private PopupWindow ringingModePopupMenu(boolean entered) {
+        final PopupWindow popupWindow = new PopupWindow(getContext());
+        final LayoutInflater inflater = (LayoutInflater) Objects.requireNonNull(getActivity())
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = inflater.inflate(R.layout.ringging_mode_view, null);
+
+        ConstraintLayout ringing_cl = view.findViewById(R.id.ringing_cl);
+        ConstraintLayout silent_cl = view.findViewById(R.id.silent_cl);
+        ConstraintLayout vibrate_cl = view.findViewById(R.id.vibrate_cl);
+
+        popupWindow.setFocusable(true);
+        popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+        popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+        popupWindow.setContentView(view);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+
+        ringing_cl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (entered) {
+
+                    enSilent = MyAnnotations.RINGER_MODE_NORMAL;
+                    ringMode_tv.setText(MyAnnotations.RINGING);
+                } else {
+                    exSilent = MyAnnotations.RINGER_MODE_NORMAL;
+                    exRingMode_tv.setText(MyAnnotations.RINGING);
+
+                }
+                popupWindow.dismiss();
+            }
+        });
+        silent_cl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (entered) {
+
+                    enSilent = MyAnnotations.RINGER_MODE_SILENT;
+                    ringMode_tv.setText(MyAnnotations.SILENT);
+
+                } else {
+                    exSilent = MyAnnotations.RINGER_MODE_SILENT;
+                    exRingMode_tv.setText(MyAnnotations.SILENT);
+
+                }
+                popupWindow.dismiss();
+            }
+        });
+        vibrate_cl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (entered) {
+                    enSilent = MyAnnotations.RINGER_MODE_VIBRATE;
+                    ringMode_tv.setText(MyAnnotations.VIBRATE);
+
+                } else {
+                    exSilent = MyAnnotations.RINGER_MODE_VIBRATE;
+                    exRingMode_tv.setText(MyAnnotations.VIBRATE);
+
+                }
+
+                popupWindow.dismiss();
+
+            }
+        });
+
+        return popupWindow;
+    }
+
+    private PopupWindow geoFencePopupMenu() {
+        final PopupWindow popupWindow = new PopupWindow(getContext());
+        final LayoutInflater inflater = (LayoutInflater) Objects.requireNonNull(getActivity())
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = inflater.inflate(R.layout.geo_fence_popup_view, null);
+
+        NumberPicker numberPicker = view.findViewById(R.id.geo_fenceType_np);
+
+        String[] type = new String[]{MyAnnotations.ENTER, MyAnnotations.EXIT, MyAnnotations.BOTH};
+        numberPicker.setMaxValue(3);
+        numberPicker.setMinValue(1);
+
+        popupWindow.setFocusable(true);
+        popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+        popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+        popupWindow.setContentView(view);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+        numberPicker.setDisplayedValues(type);
+        setNumberPickerTextColor(numberPicker);
+
+
+        numberPicker.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
+            @Override
+            public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
+                int s = picker.getValue();
+                if (s == 1) {
+                    onEntered_cl.setVisibility(View.VISIBLE);
+                    onExit_cl.setVisibility(View.GONE);
+                    geofenceType = MyAnnotations.ENTER;
+                    geoFenceType_tv.setText(MyAnnotations.ENTER);
+
+                } else if (s == 2) {
+                    onEntered_cl.setVisibility(View.GONE);
+                    onExit_cl.setVisibility(View.VISIBLE);
+                    geofenceType = MyAnnotations.EXIT;
+                    geoFenceType_tv.setText(MyAnnotations.EXIT);
+
+                } else {
+                    onEntered_cl.setVisibility(View.VISIBLE);
+                    onExit_cl.setVisibility(View.VISIBLE);
+                    geofenceType = MyAnnotations.BOTH;
+                    geoFenceType_tv.setText(MyAnnotations.BOTH);
+
                 }
             }
+        });
 
-        return time;
 
+        return popupWindow;
+    }
+
+
+    public void setNumberPickerTextColor(NumberPicker numberPicker) {
+        //change color of of number picker
+        int color = Color.parseColor("#ffffff");
+
+        final int count = numberPicker.getChildCount();
+        for (int i = 0; i < count; i++) {
+            View child = numberPicker.getChildAt(i);
+            if (child instanceof EditText) {
+                try {
+                    Field selectorWheelPaintField =
+                            numberPicker.getClass().getDeclaredField("mSelectorWheelPaint");
+                    selectorWheelPaintField.setAccessible(true);
+                    ((Paint) selectorWheelPaintField.get(numberPicker)).setColor(color);
+                    ((EditText) child).setTextColor(color);
+                    numberPicker.invalidate();
+                } catch (NoSuchFieldException e) {
+                    Log.e("setNumberPickerColor1", "" + e);
+                } catch (IllegalAccessException e) {
+                    Log.e("setNumberPickerColor2", "" + e);
+                } catch (IllegalArgumentException e) {
+                    Log.e("setNumberPickerColor3", "" + e);
+                }
+            }
+        }
     }
 
 }

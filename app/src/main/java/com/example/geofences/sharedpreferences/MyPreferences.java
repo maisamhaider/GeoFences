@@ -28,5 +28,12 @@ public class MyPreferences {
     {
         return sharedPreferences.getBoolean(key,defaultData);
     }
-
+    public void addLong(String key,Long data)
+    {
+        editor.putLong(key,data).commit();
+    }
+    public long getLong(String key,long defaultVal)
+    {
+        return  sharedPreferences.getLong(key,defaultVal);
+    }
 }

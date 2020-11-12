@@ -1,18 +1,30 @@
 package com.example.geofences.activities;
 
 
+import android.annotation.SuppressLint;
+import android.app.NotificationManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.view.GestureDetector;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -33,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private MyDatabase myDatabase;
     private DevicePolicyManager devicePolicyManager;
     private ComponentName compName;
+    NotificationManager notificationManager;
+    private GestureDetector gestureDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,23 +56,71 @@ public class MainActivity extends AppCompatActivity {
         myDatabase = new MyDatabase(MainActivity.this);
         devicePolicyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         compName = new ComponentName(this, Admin.class);
+        BottomSheetFragmentMain bottomSheetFragmentMain = new BottomSheetFragmentMain();
 
-        enablePhone();
+//        gestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
+//            @Override
+//            public boolean onDown(MotionEvent e) {
+//                bottomSheetFragmentMain.dismiss();
+//                return false;
+//            }
+//
+//            @Override
+//            public void onShowPress(MotionEvent e) {
+//
+//            }
+//
+//            @Override
+//            public boolean onSingleTapUp(MotionEvent e) {
+//                return false;
+//            }
+//
+//            @Override
+//            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+//                return false;
+//            }
+//
+//            @Override
+//            public void onLongPress(MotionEvent e) {
+//
+//            }
+//
+//            @Override
+//            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+//                return false;
+//            }
+//        });
+
+        enablePhone();// ask for admin permission
         ImageView history_iv = findViewById(R.id.history_iv);
-        Button showBottomSheet = findViewById(R.id.showBottomSheet);
+        ConstraintLayout bottomSheetStartCl = findViewById(R.id.bottomSheetStart_cl);
 
-        showBottomSheet.setOnClickListener(new View.OnClickListener() {
+        if (bottomSheetFragmentMain.isHidden()) {
+            bottomSheetStartCl.setVisibility(View.VISIBLE);
+        } else {
+            bottomSheetStartCl.setVisibility(View.VISIBLE);
+
+        }
+        bottomSheetStartCl.performClick();
+        bottomSheetStartCl.setOnTouchListener(new View.OnTouchListener() {
+            @SuppressLint("ClickableViewAccessibility")
             @Override
-            public void onClick(View v) {
-                showBottomSheetFragment();
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    bottomSheetFragmentMain.show(getSupportFragmentManager(), "Main_bottom_sheet");
+
+                }
+                return true;
             }
         });
-        history_iv.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, HistoryActivity.class));
-            }
-        });
+//        bottomSheetStartCl.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                bottomSheetFragmentMain.show(getSupportFragmentManager(), "Main_bottom_sheet");
+//
+//            }
+//        });
+
 
     }
 
@@ -77,11 +139,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void showBottomSheetFragment() {
-        BottomSheetFragmentMain bottomSheetFragmentMain = new BottomSheetFragmentMain();
-        bottomSheetFragmentMain.show(getSupportFragmentManager(), "Main_bottom_sheet");
-
-    }
 
     public void enablePhone(/*View view*/) {
         boolean active = devicePolicyManager.isAdminActive(compName);
@@ -104,18 +161,66 @@ public class MainActivity extends AppCompatActivity {
 //            btnEnable .setText( "Enable" ) ;
 //            btnLock .setVisibility(View. GONE ) ;
             devicePolicyManager.lockNow();
-        }
-        else
-        {
+        } else {
             Toast.makeText(this, "App is not activated for device admin", Toast.LENGTH_SHORT).show();
         }
 
     }
 
-    public boolean checkPer() {
-        return thesePermissions.checkSystemWritePermission(MainActivity.this); }
-
-    public void setPer() {
-         thesePermissions.openAndroidPermissionsMenu(MainActivity.this);
+    @Override
+    public void onBackPressed() {
+        exitt();
+        super.onBackPressed();
     }
+
+    public void exitt() {
+        try {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            LayoutInflater layoutInflater = getLayoutInflater();
+            @SuppressLint("InflateParams") final View dialogView =
+                    layoutInflater.inflate(R.layout.exit_layout, null);
+            ConstraintLayout yes_cl = dialogView.findViewById(R.id.yes_cl);
+            ConstraintLayout no_cl = dialogView.findViewById(R.id.no_cl);
+            ConstraintLayout rateUs_cl = dialogView.findViewById(R.id.rateUs_cl);
+
+
+            builder.setView(dialogView);
+            final AlertDialog alertDialog = builder.create();
+            alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            alertDialog.show();
+
+            yes_cl.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                     alertDialog.cancel();
+                    MainActivity.this.finishAffinity();
+                }
+            });
+
+            no_cl.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+//
+                    alertDialog.dismiss();
+
+                }
+            });
+            rateUs_cl.setOnClickListener(new View.OnClickListener() {
+                                             @Override
+                                             public void onClick(View view) {
+                                                 MainActivity.this.rate();
+                                             }
+                                         }
+            );
+
+        } catch (Exception a) {
+            a.printStackTrace();
+        }
+    }
+
+    public void rate() {
+        startActivity(new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName())));
+    }
+
 }

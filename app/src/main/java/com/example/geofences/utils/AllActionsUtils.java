@@ -39,15 +39,19 @@ public class AllActionsUtils {
         am = (AudioManager) context.getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         //For Normal mode
         if (whatToSet.matches(MyAnnotations.RINGER_MODE_NORMAL)) {
+//            am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+
+
             am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+
         } else
             //For Silent mode
             if (whatToSet.matches(MyAnnotations.RINGER_MODE_SILENT)) {
+
                 am.setRingerMode(AudioManager.RINGER_MODE_SILENT);
             } else
                 //For Vibrate mode
                 am.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-
 
     }
 
@@ -56,14 +60,9 @@ public class AllActionsUtils {
         if (bluetoothAdapter == null) {
             Toast.makeText(context, "Device does not supported ", Toast.LENGTH_SHORT).show();
         } else if (onIt) {
-            if (!bluetoothAdapter.isEnabled()) {
-                bluetoothAdapter.enable();
-            }
-
+            bluetoothAdapter.enable();
         } else {
-            if (bluetoothAdapter.isEnabled()) {
-                bluetoothAdapter.enable();
-            }
+            bluetoothAdapter.disable();
         }
 
 
@@ -71,11 +70,8 @@ public class AllActionsUtils {
 
     public void setWifiOnOff(boolean trueFalse) {
 
-        if (trueFalse) {
-            wifiManager.setWifiEnabled(!trueFalse);
+        wifiManager.setWifiEnabled(trueFalse);
 
-        } else
-            wifiManager.setWifiEnabled(trueFalse);
     }
 
 
@@ -96,11 +92,13 @@ public class AllActionsUtils {
         am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         switch (am.getRingerMode()) {
             case AudioManager.RINGER_MODE_SILENT:
-                return "RINGER_MODE_SILENT";
+                return MyAnnotations.RINGER_MODE_SILENT;
             case AudioManager.RINGER_MODE_VIBRATE:
-                return "RINGER_MODE_VIBRATE";
+                return MyAnnotations.RINGER_MODE_VIBRATE;
             case AudioManager.RINGER_MODE_NORMAL:
-                return "RINGER_MODE_NORMAL";
+                return MyAnnotations.RINGER_MODE_NORMAL;
+            case AudioManager.ADJUST_MUTE:
+                return MyAnnotations.ADJUST_MUTE;
         }
         return "null";
 

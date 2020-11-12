@@ -8,11 +8,11 @@
     <string name="un_done">Un-Done</string>
     <string name="done">Done</string>
     <string name="number_picker_formatter">%02d</string>
+    <string name="info_about">By using this application you will able to silent, ringing, vibrate, wifi on/off, bluetooth on/off and screen lock of device when you enter, exit or both(entered/exit) to selected location.</string>
+    <string name="thanks_and_feedback">Thanks for using our app for further suggestion please give us your feedback send us email at(freebirdisapps@gmail.com).</string>
+    <string name="exit_text">Are you sure you want to\n exit?</string>
 
-    <string-array name="geo_fences_actions">
-        <item>ENTER</item>
-        <item>EXIT</item>
-        <item>BOTH</item>
-    </string-array>
-
+    //test ids
+        <string name="banner">ca-app-pub-3940256099942544/6300978111</string>
+        <string name="interstitial">ca-app-pub-3940256099942544/1033173712</string>
 </resources>
