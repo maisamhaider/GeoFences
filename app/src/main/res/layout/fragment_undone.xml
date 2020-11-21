@@ -13,6 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:text="Select"
+        android:visibility="gone"
         android:textColor="@color/white"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@+id/checkBox"
@@ -20,6 +21,7 @@
         app:layout_constraintTop_toTopOf="@+id/checkBox" />
 
     <CheckBox
+        android:visibility="gone"
         android:id="@+id/checkBox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -18,12 +18,13 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:context=".fragments.MapsFragment" />
 
+
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/history_iv"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_margin="16dp"
-         android:src="@drawable/ic_list"
+        android:layout_margin="10dp"
+        android:src="@drawable/ic_list"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -31,7 +32,7 @@
         android:id="@+id/imageView3"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_margin="16dp"
+        android:layout_margin="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -51,7 +52,6 @@
         android:paddingBottom="5dp"
         app:layout_constraintBottom_toBottomOf="@+id/history_iv"
         app:layout_constraintEnd_toStartOf="@+id/imageView3"
-        app:layout_constraintHorizontal_bias="0.4"
         app:layout_constraintStart_toEndOf="@+id/history_iv"
         app:layout_constraintTop_toTopOf="@+id/map">
 
@@ -60,8 +60,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:maxLines="1"
             android:gravity="center"
+            android:maxLines="1"
             android:text="Remaining Selection: "
             android:textColor="@color/white"
             app:layout_constraintEnd_toStartOf="@+id/geo_fences_amount_tv"
@@ -69,7 +69,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-             android:id="@+id/geo_fences_amount_tv"
+            android:id="@+id/geo_fences_amount_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/white"
@@ -78,5 +78,23 @@
             app:layout_constraintTop_toTopOf="@+id/textView" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/search_sv"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_margin="10dp"
+        android:background="@drawable/search_et_bg"
+        android:hint="Place name "
+        android:maxLength="25"
+        android:maxLines="1"
+        android:padding="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout7" />
+
+    <include
+        android:visibility="gone"
+        android:id="@+id/help_map_layout"
+        layout="@layout/help_main_layout"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

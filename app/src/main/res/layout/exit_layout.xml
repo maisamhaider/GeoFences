@@ -23,7 +23,7 @@
             <ImageView
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                 android:src="@drawable/ic_round_share_24" />
+                 android:src="@drawable/ic_main" />
         </LinearLayout>
 
         <LinearLayout
