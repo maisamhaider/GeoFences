@@ -45,7 +45,7 @@ public class TimeUtil {
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.AM, 1);
         calendar.add(Calendar.DATE,1);
-        return calendar.getTimeInMillis();
+         return calendar.getTimeInMillis();
      }
     public String getFormattedTime(long millis) {
         Calendar calendar = Calendar.getInstance();

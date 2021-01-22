@@ -1,6 +1,9 @@
 package profile.manager.location.based.auto.profile.changer.activities;
 
-import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
@@ -16,13 +19,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.viewpager.widget.ViewPager;
 
-import com.airbnb.lottie.LottieAnimationView;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.LoadAdError;
 
-import java.util.ArrayList;
 
 import profile.manager.location.based.auto.profile.changer.R;
 import profile.manager.location.based.auto.profile.changer.adapters.HelpPagerAdapter;
@@ -53,6 +54,7 @@ public class MySplashActivity extends AppCompatActivity {
         mInterstitialAd.setAdUnitId(getResources().getString(R.string.interstitial));
         loadInterstitial();
 
+        Context context;
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         splash = findViewById(R.id.splash);
@@ -68,14 +70,12 @@ public class MySplashActivity extends AppCompatActivity {
 
         helpFirstTime = preferences.getBoolean(MyAnnotations.HELP_FIRST_TIME, true);
 
-
+        
         Load_withAds();
     }
 
 
     public void loadFun() {
-
-
         if (isTermAccepted) {
 
             if (helpFirstTime) {
@@ -91,27 +91,19 @@ public class MySplashActivity extends AppCompatActivity {
             splash.setVisibility(View.GONE);
             termAndCondition.setVisibility(View.VISIBLE);
 
-            accept.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (termAndCondition_Cb.isChecked()) {
-                        preferences.setBoolean(MyAnnotations.IS_TERMS_CONDITION, true);
-                        termAndCondition.setVisibility(View.GONE);
-                        help_main_layout.setVisibility(View.VISIBLE);
-                        helpScreen();
-                    } else {
-                        Toast.makeText(MySplashActivity.this,
-                                "Please check the terms and conditions box",
-                                Toast.LENGTH_SHORT).show();
-                    }
+            accept.setOnClickListener(v -> {
+                if (termAndCondition_Cb.isChecked()) {
+                    preferences.setBoolean(MyAnnotations.IS_TERMS_CONDITION, true);
+                    termAndCondition.setVisibility(View.GONE);
+                    help_main_layout.setVisibility(View.VISIBLE);
+                    helpScreen();
+                } else {
+                    Toast.makeText(MySplashActivity.this,
+                            "Please check the terms and conditions box",
+                            Toast.LENGTH_SHORT).show();
                 }
             });
-            decline.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    finishAffinity();
-                }
-            });
+            decline.setOnClickListener(v -> finishAffinity());
 
 
         }
@@ -120,8 +112,7 @@ public class MySplashActivity extends AppCompatActivity {
 
     public void Load_withAds() {
         try {
-//            mDialog.show();
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 if (mInterstitialAd != null && mInterstitialAd.isLoaded()) {
                     mInterstitialAd.show();
                 } else {
@@ -169,7 +160,7 @@ public class MySplashActivity extends AppCompatActivity {
 
     public void helpScreen() {
 
-        ViewPager viewPager = (ViewPager) findViewById(R.id.helpViewPager);
+        ViewPager viewPager = findViewById(R.id.helpViewPager);
         viewPager.setAdapter(new HelpPagerAdapter(this));
 
         TextView next_tv = findViewById(R.id.next_tv);
@@ -234,69 +225,63 @@ public class MySplashActivity extends AppCompatActivity {
         });
 
         // after action
-        next_tv.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (screen[0] == 0) {
-                    viewPager.setCurrentItem(1);
-                    back_tv.setVisibility(View.VISIBLE);
-                    screen[0] = 1;
-                    next_tv.setText(MyAnnotations.next);
-                    help_one_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.trans_black_circle_bg, null));
-                    help_two_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.black_circle_bg, null));
-                    help_three_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.trans_black_circle_bg, null));
+        next_tv.setOnClickListener(v -> {
+            if (screen[0] == 0) {
+                viewPager.setCurrentItem(1);
+                back_tv.setVisibility(View.VISIBLE);
+                screen[0] = 1;
+                next_tv.setText(MyAnnotations.next);
+                help_one_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.trans_black_circle_bg, null));
+                help_two_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.black_circle_bg, null));
+                help_three_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.trans_black_circle_bg, null));
 
-                } else if (screen[0] == 1) {
-                    viewPager.setCurrentItem(2);
+            } else if (screen[0] == 1) {
+                viewPager.setCurrentItem(2);
 
-                    screen[0] = 2;
-                    next_tv.setText(MyAnnotations.done);
-                    help_one_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.trans_black_circle_bg, null));
-                    help_two_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.trans_black_circle_bg, null));
-                    help_three_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.black_circle_bg, null));
+                screen[0] = 2;
+                next_tv.setText(MyAnnotations.done);
+                help_one_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.trans_black_circle_bg, null));
+                help_two_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.trans_black_circle_bg, null));
+                help_three_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.black_circle_bg, null));
 
-                } else {
-                    if (next_tv.getText().toString().matches(MyAnnotations.done)) {
-                        preferences.setBoolean(MyAnnotations.HELP_FIRST_TIME, false);
-                        startActivity(new Intent(MySplashActivity.this, MainActivity.class));
-                    }
+            } else {
+                if (next_tv.getText().toString().matches(MyAnnotations.done)) {
+                    preferences.setBoolean(MyAnnotations.HELP_FIRST_TIME, false);
+                    startActivity(new Intent(MySplashActivity.this, MainActivity.class));
                 }
             }
         });
-        back_tv.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (screen[0] == 2) {
-                    screen[0] = 1;
-                    viewPager.setCurrentItem(1);
+        back_tv.setOnClickListener(v -> {
+            if (screen[0] == 2) {
+                screen[0] = 1;
+                viewPager.setCurrentItem(1);
 
-                    help_one_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.trans_black_circle_bg, null));
-                    help_two_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.black_circle_bg, null));
-                    help_three_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.trans_black_circle_bg, null));
+                help_one_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.trans_black_circle_bg, null));
+                help_two_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.black_circle_bg, null));
+                help_three_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.trans_black_circle_bg, null));
 
 
-                } else if (screen[0] == 1) {
-                    screen[0] = 0;
-                    viewPager.setCurrentItem(0);
-                    back_tv.setVisibility(View.INVISIBLE);
-                    help_one_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.black_circle_bg, null));
-                    help_two_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.trans_black_circle_bg, null));
-                    help_three_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.trans_black_circle_bg, null));
+            } else if (screen[0] == 1) {
+                screen[0] = 0;
+                viewPager.setCurrentItem(0);
+                back_tv.setVisibility(View.INVISIBLE);
+                help_one_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.black_circle_bg, null));
+                help_two_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.trans_black_circle_bg, null));
+                help_three_tv.setBackground(ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.trans_black_circle_bg, null));
 
 
-                }
             }
         });
     }

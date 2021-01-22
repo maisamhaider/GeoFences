@@ -17,7 +17,6 @@ import profile.manager.location.based.auto.profile.changer.R;
 public class HelpPagerAdapter extends PagerAdapter {
 
     ArrayList<Integer> layoutList;
-
     Context context;
 
     public HelpPagerAdapter(Context context) {

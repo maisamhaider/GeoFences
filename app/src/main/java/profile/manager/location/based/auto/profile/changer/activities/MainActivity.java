@@ -91,8 +91,8 @@ public class MainActivity extends AppCompatActivity implements ClickListener {
         if (bottomSheetFragmentMain.isHidden()) {
             bottomSheetStartCl.setVisibility(View.VISIBLE);
         } else {
-            bottomSheetStartCl.setVisibility(View.VISIBLE);
 
+            bottomSheetStartCl.setVisibility(View.VISIBLE);
         }
         mInterstitialAd = new InterstitialAd(this);
         mInterstitialAd.setAdUnitId(getResources().getString(R.string.interstitial));
@@ -105,7 +105,8 @@ public class MainActivity extends AppCompatActivity implements ClickListener {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    bottomSheetFragmentMain.show(getSupportFragmentManager(), "Main_bottom_sheet");
+                    bottomSheetFragmentMain.show(getSupportFragmentManager(),
+                            "Main_bottom_sheet");
                 }
                 return true;
             }
@@ -119,7 +120,8 @@ public class MainActivity extends AppCompatActivity implements ClickListener {
         try {
 
             showDialog = ProgressDialog.show(MainActivity.this,
-                    getString(R.string.app_name), "Please wait a seconds",
+                    getString(R.string.app_name),
+                    "Please wait a seconds",
                     true);
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 if (showDialog != null) {
@@ -133,7 +135,8 @@ public class MainActivity extends AppCompatActivity implements ClickListener {
                         loadFragments(fragment);
                     }
                     else {
-                        startActivity(new Intent(MainActivity.this,activity.getClass()));
+                        startActivity(new Intent(
+                                MainActivity.this,activity.getClass()));
                     }
 //                    loadInterstitial();
                 }

@@ -8,11 +8,21 @@
     <string name="un_done">Un-Done</string>
     <string name="done">Done</string>
     <string name="number_picker_formatter">%02d</string>
-    <string name="info_about">By using this application you will able to silent, ringing, vibrate, wifi on/off, bluetooth on/off and screen lock of device when you enter and exit to selected location.</string>
-    <string name="thanks_and_feedback">Thanks for using our app for further suggestion please give us your feedback send us email at(freebirdisapps@gmail.com).</string>
+    <string name="info_about">By using this application you will able to silent, ringing, vibrate,
+        wifi on/off, bluetooth on/off and screen lock of device when you enter and exit to selected
+        location.</string>
+    <string name="thanks_and_feedback">Thanks for using our app for further suggestion please give
+        us your feedback send us email at(freebirdisapps@gmail.com).</string>
     <string name="exit_text">Are you sure you want to\n exit?</string>
-    <string name="permission_texts">This application asks user to allow certain permissions that are required for the application to perform its actions properly. (Profile Manager- Location based auto profile changer) helps user to  silent, ringing, vibrate, wifi on/off, bluetooth on/off and screen lock of device when you enter, exit or both(entered/exit) to selected location and manually.We insure you that the user personal data or information is not collected by the company nor does the application host users data </string>
-    <string name="permissions_explanation">1. Location permission needed to check if user is entered and exit or not.\n\n2. Do Not Disturb permission is required to change ringing mode and enable do not disturb mode.\n\n3. Admin permission is required to lock device screen</string>
+    <string name="permission_texts">This application asks user to allow certain permissions that are
+        required for the application to perform its actions properly.
+        (Profile Manager- Location based auto profile changer) helps user to  silent, ringing,
+        vibrate, wifi on/off, bluetooth on/off and screen lock of device when you enter, exit or
+        both(entered/exit) to selected location and manually.We insure you that the user personal
+        data or information is not collected by the company nor does the application host users data </string>
+    <string name="permissions_explanation">1. Location permission needed to check if user is entered
+        and exit or not.\n\n2. Do Not Disturb permission is required to change ringing mode and
+        enable do not disturb mode.\n\n3. Admin permission is required to lock device screen</string>
     <string name="by_accepting">By accepting you are agree to our <u><b>Terms and Conditions</b></u> </string>
 
     //test ids
@@ -24,8 +34,8 @@
 <!--    <string name="app_id">ca-app-pub-6736019070743734~7242771094</string>-->
 
 
-    <string name="by_walk">60x60 (m)</string>
-    <string name="by_car">250x250 (m)</string>
-    <string name="by_bus">200X200 (m)</string>
-    <string name="by_cycle">100x100 (m)</string>
+    <string name="by_walk">100x100 (m)</string>
+    <string name="by_cycle">200x200 (m)</string>
+    <string name="by_bus">250x250 (m)</string>
+    <string name="by_car">300x200 (m)</string>
 </resources>

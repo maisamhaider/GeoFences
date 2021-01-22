@@ -7,15 +7,22 @@
     tools:context=".activities.MySplashActivity">
 
     <include
-        android:visibility="gone"
         android:id="@+id/termAndCondition"
-        layout="@layout/terms_conditions"/>
+        layout="@layout/terms_conditions"
+        android:visibility="gone" />
+
     <include
         android:id="@+id/splash"
-        layout="@layout/splash_xml"/>
+        layout="@layout/splash_xml"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <include
-        android:visibility="gone"
         android:id="@+id/help_main_layout"
-        layout="@layout/help_main_layout"/>
+        layout="@layout/help_main_layout"
+        android:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

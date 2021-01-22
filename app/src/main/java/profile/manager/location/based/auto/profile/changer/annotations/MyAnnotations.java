@@ -33,10 +33,10 @@ public @interface MyAnnotations {
 
     String MY_PREFERENCES = "MY_PREFERENCES";
 
-    String BY_WALK = "60x60 (m)";
-    String BY_CYCLE = "100x100 (m)";
-    String BY_BUS = "200x200 (m)";
-    String BY_CAR = "250x250 (m)";
+    String BY_WALK = "100x100 (m)";
+    String BY_CYCLE = "200x200 (m)";
+    String BY_BUS = "250x250 (m)";
+    String BY_CAR = "300x200 (m)";
 
     String CHANNEL_ID = "CHANNEL_ID";
     String CHANNEL_NAME = R.string.app_name+"channel";

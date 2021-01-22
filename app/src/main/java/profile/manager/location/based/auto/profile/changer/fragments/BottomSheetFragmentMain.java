@@ -31,11 +31,7 @@ import profile.manager.location.based.auto.profile.changer.interfaces.ClickListe
 import profile.manager.location.based.auto.profile.changer.utils.AllActionsUtils;
 import profile.manager.location.based.auto.profile.changer.utils.Utils;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link BottomSheetFragmentMain#newInstance} factory method to
- * create an instance of this fragment.
- */
+
 public class BottomSheetFragmentMain extends BottomSheetDialogFragment {
     NotificationManager mNotificationManager;
     private AllActionsUtils allActionsUtils;

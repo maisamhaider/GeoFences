@@ -191,7 +191,8 @@ public class DoneFragment extends Fragment implements SelectAll, LongClickListen
                     @Override
                     public void onClick(View v) {
                         adapter.deleteData();
-                        ArrayList<HistoryModel> list = ((HistoryActivity) getActivity()).getHistory(true);
+                        ArrayList<HistoryModel> list = ((HistoryActivity)
+                                getActivity()).getHistory(true);
                         loadData(list);
                         dialog.dismiss();
                     }
